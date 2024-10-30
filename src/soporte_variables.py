@@ -71,7 +71,7 @@ query_creacion_poblacion = '''
 CREATE TABLE IF NOT EXISTS poblacion (
     id_poblacion SERIAL PRIMARY KEY,
     id_provincia INT REFERENCES provincias(id_provincia) ON UPDATE CASCADE ON DELETE RESTRICT,
-    id_grupo_edad INT REFERENCES edades(id_grupo_edad) ON UPDATE CASCADE ON DELETE RESTRICT,
+    grupo_edad VARCHAR,
     nacionalidad VARCHAR,
     sexo VARCHAR,
     anio INT,
@@ -80,7 +80,7 @@ CREATE TABLE IF NOT EXISTS poblacion (
 '''
 
 query_insercion_poblacion = '''
-    insert into poblacion (id_provincia, id_grupo_edad, nacionalidad, sexo, anio, total)
+    insert into poblacion (id_provincia, grupo_edad, nacionalidad, sexo, anio, total)
     values
     (%s, %s, %s, %s, %s, %s)''' 
 
@@ -89,14 +89,14 @@ query_creacion_pib = '''
 CREATE TABLE IF NOT EXISTS pib (
     id_pib SERIAL PRIMARY KEY,
     id_provincia INT REFERENCES provincias(id_provincia) ON UPDATE CASCADE ON DELETE RESTRICT,
-    id_rama INT REFERENCES ramas(id_rama) ON UPDATE CASCADE ON DELETE RESTRICT,
+    rama VARCHAR,
     anio INT,
     total FLOAT
 );
 '''
 
 query_insercion_pib = '''
-    insert into pib (id_provincia, id_rama, anio, total)
+    insert into pib (id_provincia, rama, anio, total)
     values
     (%s, %s, %s, %s)''' 
 
@@ -125,7 +125,7 @@ CREATE TABLE IF NOT EXISTS demanda (
 '''
 
 query_insercion_demanda = '''
-    insert into demanda (id_ccaa, anio, mes, valor)
+    insert into demanda (anio, mes, id_ccaa, valor)
     values
     (%s, %s, %s, %s)''' 
 
