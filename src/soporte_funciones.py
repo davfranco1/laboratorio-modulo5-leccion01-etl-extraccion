@@ -59,11 +59,23 @@ def dbeaver_conexion(database):
 
 
 def crear_db(database_name):
-    # conexion a postgres
-    conn = dbeaver_conexion(database_name) # Nos conectamos a la base de datos de postgres por defecto para poder crear la nueva base de datos
-    
+    try:
+        conexion = psycopg2.connect(
+            user=dbeaver_user,
+            password=dbeaver_pw,
+            host="localhost",
+            port="5432"
+        )
+    except OperationalError as e:
+        if e.pgcode == errorcodes.INVALID_PASSWORD:
+            print("Contraseña es errónea")
+        elif e.pgcode == errorcodes.CONNECTION_EXCEPTION:
+            print("Error de conexión")
+        else:
+            print(f"Ocurrió el error {e}")
+
     # creamos un cursor con la conexion que acabamos de crear
-    cur = conn.cursor()
+    cur = conexion.cursor()
     
     cur.execute("SELECT 1 FROM pg_database WHERE datname = %s", (database_name,))
     
@@ -79,7 +91,7 @@ def crear_db(database_name):
         
     # Cerramos el cursor y la conexion
     cur.close()
-    conn.close()
+    conexion.close()
 
 
 
