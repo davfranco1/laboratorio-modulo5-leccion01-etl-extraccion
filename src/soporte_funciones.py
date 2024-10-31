@@ -59,6 +59,29 @@ def dbeaver_conexion(database):
 
 
 def crear_db(database_name):
+    """
+    Creates a PostgreSQL database if it does not already exist.
+
+    Parameters:
+    -----------
+    database_name : str
+        The name of the database to be created.
+
+    This function connects to the PostgreSQL server using user credentials, checks if a database 
+    with the given name exists, and creates it if it does not. If a connection error occurs, 
+    the function will print the specific error type, such as an incorrect password or connection 
+    issue. 
+
+    Dependencies:
+    -------------
+    Requires psycopg2 package and the following global variables:
+    - dbeaver_user: str - The username to connect to PostgreSQL.
+    - dbeaver_pw: str - The password associated with the username.
+
+    Returns:
+    --------
+    None
+    """
     try:
         conexion = psycopg2.connect(
             user=dbeaver_user,
@@ -66,6 +89,26 @@ def crear_db(database_name):
             host="localhost",
             port="5432"
         )
+
+        # Create a cursor with the new connection
+        cursor = conexion.cursor()
+        
+        cursor.execute("SELECT 1 FROM pg_database WHERE datname = %s", (database_name,))
+        
+        # Store the result of fetchone; if exists, it will have a row, else None
+        bbdd_existe = cursor.fetchone()
+        
+        # If bbdd_existe is None, create the database
+        if not bbdd_existe:
+            cursor.execute(f"CREATE DATABASE {database_name};")
+            print(f"Base de datos {database_name} creada con éxito")
+        else:
+            print("La base de datos ya existe")
+            
+        # Close the cursor and connection
+        cursor.close()
+        conexion.close()
+
     except OperationalError as e:
         if e.pgcode == errorcodes.INVALID_PASSWORD:
             print("Contraseña es errónea")
@@ -73,26 +116,6 @@ def crear_db(database_name):
             print("Error de conexión")
         else:
             print(f"Ocurrió el error {e}")
-
-    # creamos un cursor con la conexion que acabamos de crear
-    cur = conexion.cursor()
-    
-    cur.execute("SELECT 1 FROM pg_database WHERE datname = %s", (database_name,))
-    
-    # Almacenamos en una variable el resultado del fetchone. Si existe tendrá una fila sino será None
-    bbdd_existe = cur.fetchone()
-    
-    # Si bbdd_existe es None, creamos la base de datos
-    if not bbdd_existe:
-        cur.execute(f"CREATE DATABASE {database_name};")
-        print(f"Base de datos {database_name} creada con éxito")
-    else:
-        print(f"La base de datos ya existe")
-        
-    # Cerramos el cursor y la conexion
-    cur.close()
-    conexion.close()
-
 
 
 def dbeaver_fetch(conexion, query):
@@ -159,3 +182,25 @@ def dbeaver_commitmany(conexion, query, *values):
     cursor.close()
     conexion.close()
     return print("Commit realizado")
+
+
+def identificar_outliers(df, columna):
+    """
+    Identifica outliers en una columna de un DataFrame utilizando el método IQR.
+    
+    Parámetros:
+    df (DataFrame): El DataFrame que contiene la columna a evaluar.
+    columna (str): El nombre de la columna a evaluar.
+
+    Retorna:
+    DataFrame: Un DataFrame que contiene solo los outliers.
+    """
+    Q1 = df[columna].quantile(0.25)
+    Q3 = df[columna].quantile(0.75)
+    IQR = Q3 - Q1
+
+    lower_bound = Q1 - 1.5 * IQR
+    upper_bound = Q3 + 1.5 * IQR
+
+    outliers = df[(df[columna] < lower_bound) | (df[columna] > upper_bound)]
+    return outliers
